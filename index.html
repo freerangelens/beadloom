@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bead Loom – Miyuki Live</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    background:#111;
+    color:#eee;
+    font-family:Arial, sans-serif;
+    padding:20px;
+  }
+
+  #controls {
+    margin-bottom:10px;
+  }
+
+  input, button {
+    padding:6px;
+    margin-right:10px;
+    font-size:16px;
+  }
+
+  #modeButtons {
+    margin-top:10px;
+    margin-bottom:10px;
+  }
+
+  #modeButtons button.active {
+    background:#4caf50;
+    color:#fff;
+  }
+
+  #wrapper {
+    width:800px;
+    height:800px;
+    background:#222;
+    overflow:scroll;
+    position:relative;
+    margin-top:10px;
+    touch-action:auto;
+  }
+
+  #canvas {
+    position:absolute;
+    top:0;
+    left:0;
+    border:1px solid #555;
+    background:#000;
+  }
+</style>
+</head>
+<body>
+
+<h2>Bead Loom – Miyuki Live</h2>
+
+<div id="controls">
+  <label>Grid Width (beads):</label>
+  <input type="number" id="gw" value="9" min="1">
+
+  <label>Grid Height (beads):</label>
+  <input type="number" id="gh" value="128" min="1">
+
+  <button id="applyGridBtn">Apply Grid</button>
+  <br><br>
+
+  <input type="file" id="fileInput" accept="image/*">
+  <button id="rebuildBtn">Rebuild Preview</button>
+
+  <button id="toggleOriginalBtn">Show Original Image</button>
+</div>
+
+<div id="modeButtons">
+  <button id="moveImageBtn" class="active">Move Image</button>
+  <button id="moveGridBtn">Zoom Grid</button>
+</div>
+
+<div id="wrapper">
+  <canvas id="canvas"></canvas>
+</div>
+
+<!-- Load the JS file -->
+<script src="app.js"></script>
+
+</body>
+</html>
