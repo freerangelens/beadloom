@@ -30,17 +30,21 @@ function drawGrid() {
     for (let y = 0; y <= gridHeight; y++) {
         gridCtx.beginPath();
         gridCtx.moveTo(0, y * beadSize);
-        gridCtx.lineTo(gridCanvas.width, y * beadSize);
+        gridCtx.lineTo(gridCtx.canvas.width, y * beadSize);
         gridCtx.stroke();
     }
 }
 
 function drawImageToGrid() {
-    if (!uploadedImage) return;
+    if (!uploadedImage) {
+        drawGrid();
+        return;
+    }
 
     imageCanvas.width = gridWidth;
     imageCanvas.height = gridHeight;
 
+    imageCtx.clearRect(0, 0, gridWidth, gridHeight);
     imageCtx.drawImage(uploadedImage, 0, 0, gridWidth, gridHeight);
 
     let imgData = imageCtx.getImageData(0, 0, gridWidth, gridHeight).data;
@@ -67,25 +71,32 @@ document.getElementById("imageUpload").addEventListener("change", function (e) {
     let img = new Image();
     img.onload = function () {
         uploadedImage = img;
+        resizeCanvas();
         drawImageToGrid();
     };
     img.src = URL.createObjectURL(file);
 });
 
 document.getElementById("beadSize").addEventListener("input", function (e) {
-    beadSize = parseInt(e.target.value);
+    let v = parseInt(e.target.value, 10);
+    if (!Number.isFinite(v) || v <= 0) return;
+    beadSize = v;
     resizeCanvas();
     drawImageToGrid();
 });
 
 document.getElementById("gridWidth").addEventListener("input", function (e) {
-    gridWidth = parseInt(e.target.value);
+    let v = parseInt(e.target.value, 10);
+    if (!Number.isFinite(v) || v <= 0) return;
+    gridWidth = v;
     resizeCanvas();
     drawImageToGrid();
 });
 
 document.getElementById("gridHeight").addEventListener("input", function (e) {
-    gridHeight = parseInt(e.target.value);
+    let v = parseInt(e.target.value, 10);
+    if (!Number.isFinite(v) || v <= 0) return;
+    gridHeight = v;
     resizeCanvas();
     drawImageToGrid();
 });
