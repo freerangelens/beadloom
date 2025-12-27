@@ -1,88 +1,94 @@
-alert("JS loaded");
-!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Bead Loom – Miyuki Live (Fixed Sampling)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+let gridCanvas = document.getElementById("gridCanvas");
+let gridCtx = gridCanvas.getContext("2d");
 
-<style>
-  body {
-    background:#111;
-    color:#eee;
-    font-family:Arial, sans-serif;
-    padding:20px;
-  }
+let imageCanvas = document.createElement("canvas");
+let imageCtx = imageCanvas.getContext("2d");
 
-  #controls {
-    margin-bottom:10px;
-  }
+let uploadedImage = null;
+let beadSize = 20;
+let gridWidth = 30;
+let gridHeight = 30;
 
-  input, button {
-    padding:6px;
-    margin-right:10px;
-    font-size:16px;
-  }
+function resizeCanvas() {
+    gridCanvas.width = gridWidth * beadSize;
+    gridCanvas.height = gridHeight * beadSize;
+}
 
-  #modeButtons {
-    margin-top:10px;
-    margin-bottom:10px;
-  }
+function drawGrid() {
+    gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
 
-  #modeButtons button.active {
-    background:#4caf50;
-    color:#fff;
-  }
+    gridCtx.strokeStyle = "#ccc";
+    gridCtx.lineWidth = 1;
 
-  #wrapper {
-    width:800px;
-    height:800px;
-    background:#222;
-    overflow:scroll;
-    position:relative;
-    margin-top:10px;
-    touch-action:auto;
-  }
+    for (let x = 0; x <= gridWidth; x++) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(x * beadSize, 0);
+        gridCtx.lineTo(x * beadSize, gridCanvas.height);
+        gridCtx.stroke();
+    }
 
-  #canvas {
-    position:absolute;
-    top:0;
-    left:0;
-    border:1px solid #555;
-    background:#000;
-  }
-</style>
-</head>
-<body>
+    for (let y = 0; y <= gridHeight; y++) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(0, y * beadSize);
+        gridCtx.lineTo(gridCanvas.width, y * beadSize);
+        gridCtx.stroke();
+    }
+}
 
-<h2>Bead Loom – Miyuki Live (Fixed Sampling)</h2>
+function drawImageToGrid() {
+    if (!uploadedImage) return;
 
-<div id="controls">
-  <label>Grid Width (beads):</label>
-  <input type="number" id="gw" value="9" min="1">
+    imageCanvas.width = gridWidth;
+    imageCanvas.height = gridHeight;
 
-  <label>Grid Height (beads):</label>
-  <input type="number" id="gh" value="128" min="1">
+    imageCtx.drawImage(uploadedImage, 0, 0, gridWidth, gridHeight);
 
-  <button id="applyGridBtn">Apply Grid</button>
-  <br><br>
+    let imgData = imageCtx.getImageData(0, 0, gridWidth, gridHeight).data;
 
-  <input type="file" id="fileInput" accept="image/*">
-  <button id="rebuildBtn">Rebuild Preview</button>
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+            let i = (y * gridWidth + x) * 4;
+            let r = imgData[i];
+            let g = imgData[i + 1];
+            let b = imgData[i + 2];
 
-  <button id="toggleOriginalBtn">Show Original Image</button>
-</div>
+            gridCtx.fillStyle = `rgb(${r},${g},${b})`;
+            gridCtx.fillRect(x * beadSize, y * beadSize, beadSize, beadSize);
+        }
+    }
 
-<div id="modeButtons">
-  <button id="moveImageBtn" class="active">Move Image</button>
-  <button id="moveGridBtn">Zoom Grid</button>
-</div>
+    drawGrid();
+}
 
-<div id="wrapper">
-  <canvas id="canvas"></canvas>
-</div>
+document.getElementById("imageUpload").addEventListener("change", function (e) {
+    let file = e.target.files[0];
+    if (!file) return;
 
-<script src="app.js"></script>
+    let img = new Image();
+    img.onload = function () {
+        uploadedImage = img;
+        drawImageToGrid();
+    };
+    img.src = URL.createObjectURL(file);
+});
 
-</body>
-</html>
+document.getElementById("beadSize").addEventListener("input", function (e) {
+    beadSize = parseInt(e.target.value);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridWidth").addEventListener("input", function (e) {
+    gridWidth = parseInt(e.target.value);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridHeight").addEventListener("input", function (e) {
+    gridHeight = parseInt(e.target.value);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+resizeCanvas();
+drawGrid();
