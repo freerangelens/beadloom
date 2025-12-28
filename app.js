@@ -138,4 +138,78 @@ function getPalette() {
 function drawImageToGrid() {
     gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
 
-    if (!uploaded
+    if (!uploadedImage) {
+        drawGrid();
+        return;
+    }
+
+    imageCanvas.width = gridWidth;
+    imageCanvas.height = gridHeight;
+
+    imageCtx.drawImage(uploadedImage, 0, 0, gridWidth, gridHeight);
+
+    const palette = getPalette();
+    const imgData = imageCtx.getImageData(0, 0, gridWidth, gridHeight).data;
+
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+            const i = (y * gridWidth + x) * 4;
+            const r = imgData[i];
+            const g = imgData[i+1];
+            const b = imgData[i+2];
+
+            const [rr, gg, bb] = nearestColor(r, g, b, palette);
+
+            gridCtx.fillStyle = `rgb(${rr},${gg},${bb})`;
+            gridCtx.fillRect(x * beadSize, y * beadSize, beadSize, beadSize);
+        }
+    }
+
+    drawGrid();
+}
+
+// ----------------------
+// Events
+// ----------------------
+
+document.getElementById("paletteMode").addEventListener("change", () => {
+    const mode = document.getElementById("paletteMode").value;
+    document.getElementById("customPaletteContainer").style.display =
+        mode === "custom" ? "block" : "none";
+    drawImageToGrid();
+});
+
+document.getElementById("imageUpload").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+        uploadedImage = img;
+        resizeCanvas();
+        drawImageToGrid();
+    };
+    img.src = URL.createObjectURL(file);
+});
+
+document.getElementById("beadSize").addEventListener("input", (e) => {
+    beadSize = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridWidth").addEventListener("input", (e) => {
+    gridWidth = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridHeight").addEventListener("input", (e) => {
+    gridHeight = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+// Initial
+resizeCanvas();
+drawGrid();
