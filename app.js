@@ -215,3 +215,69 @@ document.getElementById("imageUpload").addEventListener("change", (e) => {
     };
     img.src = URL.createObjectURL(file);
 });
+});
+
+document.getElementById("beadSize").addEventListener("input", (e) => {
+    beadSize = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridWidth").addEventListener("input", (e) => {
+    gridWidth = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+document.getElementById("gridHeight").addEventListener("input", (e) => {
+    gridHeight = parseInt(e.target.value, 10);
+    resizeCanvas();
+    drawImageToGrid();
+});
+
+// ----------------------
+// Dragging (mouse + touch)
+// ----------------------
+
+gridCanvas.addEventListener("mousedown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+gridCanvas.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    imgX += dx;
+    imgY += dy;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    drawImageToGrid();
+});
+
+gridCanvas.addEventListener("mouseup", () => dragging = false);
+gridCanvas.addEventListener("mouseleave", () => dragging = false);
+
+gridCanvas.addEventListener("touchstart", (e) => {
+    dragging = true;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+});
+
+gridCanvas.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - lastX;
+    const dy = e.touches[0].clientY - lastY;
+    imgX += dx;
+    imgY += dy;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    drawImageToGrid();
+});
+
+gridCanvas.addEventListener("touchend", () => dragging = false);
+
+// Initial draw
+resizeCanvas();
+drawGrid();
