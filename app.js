@@ -9,6 +9,13 @@ let beadSize = 20;
 let gridWidth = 30;
 let gridHeight = 30;
 
+// Drag state
+let imgX = 0;
+let imgY = 0;
+let dragging = false;
+let lastX = 0;
+let lastY = 0;
+
 // ----------------------
 // Utility
 // ----------------------
@@ -125,7 +132,7 @@ function getPalette() {
 
     const k = mode === "auto8" ? 8 : mode === "auto16" ? 16 : 32;
 
-    const imgData = imageCtx.getImageData(0, 0, gridWidth, gridHeight).data;
+    const imgData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height).data;
     const pixels = [];
 
     for (let i = 0; i < imgData.length; i += 4) {
@@ -143,20 +150,29 @@ function drawImageToGrid() {
         return;
     }
 
-    imageCanvas.width = gridWidth;
-    imageCanvas.height = gridHeight;
+    // Draw full‑size image at its dragged position
+    imageCanvas.width = uploadedImage.width;
+    imageCanvas.height = uploadedImage.height;
 
-    imageCtx.drawImage(uploadedImage, 0, 0, gridWidth, gridHeight);
+    imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+    imageCtx.drawImage(uploadedImage, imgX, imgY);
 
     const palette = getPalette();
-    const imgData = imageCtx.getImageData(0, 0, gridWidth, gridHeight).data;
 
     for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
-            const i = (y * gridWidth + x) * 4;
-            const r = imgData[i];
-            const g = imgData[i+1];
-            const b = imgData[i+2];
+
+            const px = imgX + x;
+            const py = imgY + y;
+
+            let r = 255, g = 255, b = 255;
+
+            if (px >= 0 && py >= 0 && px < imageCanvas.width && py < imageCanvas.height) {
+                const d = imageCtx.getImageData(px, py, 1, 1).data;
+                r = d[0];
+                g = d[1];
+                b = d[2];
+            }
 
             const [rr, gg, bb] = nearestColor(r, g, b, palette);
 
@@ -186,6 +202,8 @@ document.getElementById("imageUpload").addEventListener("change", (e) => {
     const img = new Image();
     img.onload = () => {
         uploadedImage = img;
+        imgX = 0;
+        imgY = 0;
         resizeCanvas();
         drawImageToGrid();
     };
@@ -210,6 +228,17 @@ document.getElementById("gridHeight").addEventListener("input", (e) => {
     drawImageToGrid();
 });
 
-// Initial
-resizeCanvas();
-drawGrid();
+// ----------------------
+// Dragging (mouse + touch)
+// ----------------------
+
+gridCanvas.addEventListener("mousedown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+gridCanvas.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - last
