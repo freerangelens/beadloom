@@ -65,4 +65,153 @@ function generatePaletteKMeans(pixels, k) {
             let bestDist = Infinity;
             for (let i = 0; i < k; i++) {
                 const c = centroids[i];
-                const d = (p[0]-c[0])**2 + (p[1]-c[1])
+                const d = (p[0]-c[0])**2 + (p[1]-c[1])**2 + (p[2]-c[2])**2;
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+            clusters[best].push(p);
+        }
+
+        for (let i = 0; i < k; i++) {
+            if (clusters[i].length === 0) continue;
+            let r = 0, g = 0, b = 0;
+            for (let p of clusters[i]) {
+                r += p[0];
+                g += p[1];
+                b += p[2];
+            }
+            r = Math.round(r / clusters[i].length);
+            g = Math.round(g / clusters[i].length);
+            b = Math.round(b / clusters[i].length);
+            centroids[i] = [r, g, b];
+        }
+    }
+
+    return centroids;
+}
+
+// ----------------------
+// Drawing
+// ----------------------
+
+function resizeCanvas() {
+    gridCanvas.width = gridWidth * beadSize;
+    gridCanvas.height = gridHeight * beadSize;
+}
+
+function drawGrid() {
+    gridCtx.strokeStyle = "#cccccc";
+    gridCtx.lineWidth = 1;
+
+    for (let x = 0; x <= gridWidth; x++) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(x * beadSize, 0);
+        gridCtx.lineTo(x * beadSize, gridCanvas.height);
+        gridCtx.stroke();
+    }
+
+    for (let y = 0; y <= gridHeight; y++) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(0, y * beadSize);
+        gridCtx.lineTo(gridCanvas.width, y * beadSize);
+        gridCtx.stroke();
+    }
+}
+
+function getPalette() {
+    const mode = document.getElementById("paletteMode").value;
+
+    if (mode === "custom") {
+        const lines = document.getElementById("customPalette").value
+            .split("\n")
+            .map(l => l.trim())
+            .filter(l => l.length > 0);
+
+        return lines.map(hexToRGB);
+    }
+
+    const k = mode === "auto8" ? 8 : mode === "auto16" ? 16 : 32;
+
+    const imgData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height).data;
+    const pixels = [];
+
+    for (let i = 0; i < imgData.length; i += 4) {
+        pixels.push([imgData[i], imgData[i+1], imgData[i+2]]);
+    }
+
+    return generatePaletteKMeans(pixels, k);
+}
+
+function drawImageToGrid() {
+    gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+
+    if (!uploadedImage) {
+        drawGrid();
+        return;
+    }
+
+    // Draw full‑size image at its dragged position
+    imageCanvas.width = uploadedImage.width;
+    imageCanvas.height = uploadedImage.height;
+
+    imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+    imageCtx.drawImage(uploadedImage, imgX, imgY);
+
+    const palette = getPalette();
+
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+
+            // SAMPLE USING BEAD SIZE (correct fix)
+            const px = imgX + x * beadSize;
+            const py = imgY + y * beadSize;
+
+            let r = 255, g = 255, b = 255;
+
+            if (px >= 0 && py >= 0 && px < imageCanvas.width && py < imageCanvas.height) {
+                const d = imageCtx.getImageData(px, py, 1, 1).data;
+                r = d[0];
+                g = d[1];
+                b = d[2];
+            }
+
+            const [rr, gg, bb] = nearestColor(r, g, b, palette);
+
+            gridCtx.fillStyle = `rgb(${rr},${gg},${bb})`;
+            gridCtx.fillRect(x * beadSize, y * beadSize, beadSize, beadSize);
+        }
+    }
+
+    drawGrid();
+}
+
+// ----------------------
+// Events
+// ----------------------
+
+document.getElementById("paletteMode").addEventListener("change", () => {
+    const mode = document.getElementById("paletteMode").value;
+    document.getElementById("customPaletteContainer").style.display =
+        mode === "custom" ? "block" : "none";
+    drawImageToGrid();
+});
+
+document.getElementById("imageUpload").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+        uploadedImage = img;
+
+        // CENTER IMAGE UNDER GRID
+        imgX = Math.floor((gridWidth * beadSize - uploadedImage.width) / 2);
+        imgY = Math.floor((gridHeight * beadSize - uploadedImage.height) / 2);
+
+        resizeCanvas();
+        drawImageToGrid();
+    };
+    img.src = URL.createObjectURL(file);
+});
