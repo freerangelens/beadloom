@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Beadloom — Palette Edition</title>
+    <title>Beadloom — Drag Edition</title>
     <style>
         body {
             font-family: sans-serif;
@@ -14,6 +14,7 @@
         canvas {
             border: 1px solid #333;
             image-rendering: pixelated;
+            touch-action: none; /* important for mobile dragging */
         }
         label {
             margin-right: 10px;
@@ -29,7 +30,7 @@
     <script src="app.js" defer></script>
 </head>
 <body>
-    <h1>Beadloom — Palette Edition</h1>
+    <h1>Beadloom — Drag Edition</h1>
 
     <div id="controls">
         <label>
